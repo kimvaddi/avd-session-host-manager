@@ -1,4 +1,4 @@
-# Azure AVD Session Host Manager
+# AVD Manager - Azure Virtual Desktop Admin Tool
 
 Stop clicking through the Azure Portal to manage your Azure Virtual Desktop environment. This VS Code extension gives AVD admins a single pane of glass for host pools, session hosts, user sessions, image templates, scaling plans, and diagnostics — all without leaving your editor.
 
