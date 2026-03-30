@@ -10,7 +10,7 @@ Stop clicking through the Azure Portal to manage your Azure Virtual Desktop envi
 
 1. Open **VS Code**
 2. Go to the **Extensions** view — click the Extensions icon in the left sidebar, or press `Ctrl+Shift+X`
-3. Search for **"AVD Session Host Manager"**
+3. Search for **"AVD Manager"**
 4. Click **Install**
 5. Done — you'll see a new **AVD Manager** icon in the left Activity Bar
 

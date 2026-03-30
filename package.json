@@ -234,7 +234,7 @@
       ]
     },
     "configuration": {
-      "title": "AVD Session Host Manager",
+      "title": "AVD Manager",
       "properties": {
         "avd.autoRefreshIntervalSeconds": {
           "type": "number",
