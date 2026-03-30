@@ -1,0 +1,17 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+node_modules/
+
+# Build output
+out/
+
+# VS Code test environment
+.vscode-test/
+
+# Extension package
+*.vsix
+
+# Private development files
+RUNBOOK.md
+Prompts.txt

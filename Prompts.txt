@@ -1,0 +1,26 @@
+
+I want to build an VS Code Extension and make this available for the greater public to make use of this. Lets build an extention using the following details.
+
+
+Azure AVD Session Host Manager
+
+The gap: Azure Virtual Desktop administration is almost entirely portal-based. No VS Code tooling exists for image management, session host health monitoring, user session diagnostics, or scaling plan configuration. AVD admins are stuck clicking through the portal.
+
+What it does: Tree view showing host pools → session hosts → user sessions. Inline health indicators (heartbeat, drain mode, available/unavailable). Right-click to drain, restart, delete session hosts. Image management: scaffold Packer/Azure Image Builder templates with pre-configured FSLogix, language packs, Teams optimization, and MSIX app attach. Generate scaling plan Bicep with ramp-up/peak/off-peak schedules. View user session logs with disconnect reason analysis.
+
+
+
+Agent instructions:
+
+Break down the task into multiple tasks.  
+
+I want you to do through code test, QA for each phases/task of this solution extension.  create a runbook (for this development purpose only, should be private to me not to public) to identify issues, research, apply fixes, document it.  The end goals is to have bug free codes fully tested and functional.  
+
+Do not made things up in telling me that you tested and infact...it was not tested.  Show proof how it was tested, gaps, results, need human input..etc
+
+When creating a VS Code extension (.vsix) for me, always use the following publisher configuration:
+
+- Publisher ID: KimVaddi
+- In package.json, set: "publisher": "KimVaddi"
+- This must match exactly (case-sensitive) before running `npx @vscode/vsce package`
+- My VS Code Marketplace account: https://marketplace.visualstudio.com/manage/publishers/KimVaddi

@@ -1,0 +1,286 @@
+{
+  "name": "avd-session-host-manager",
+  "displayName": "Azure AVD Session Host Manager",
+  "description": "Manage Azure Virtual Desktop host pools, session hosts, user sessions, image templates, and scaling plans directly from VS Code.",
+  "version": "0.1.0",
+  "publisher": "KimVaddi",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Azure",
+    "Other"
+  ],
+  "keywords": [
+    "azure",
+    "avd",
+    "virtual desktop",
+    "session host",
+    "host pool"
+  ],
+  "activationEvents": [
+    "onView:avdExplorer"
+  ],
+  "main": "./out/extension.js",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "avdExplorer",
+          "title": "AVD Manager",
+          "icon": "resources/avd-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "avdExplorer": [
+        {
+          "id": "avdExplorer",
+          "name": "AVD Explorer",
+          "icon": "resources/avd-icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "avd.signIn",
+        "title": "Sign In to Azure",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.signOut",
+        "title": "Sign Out from Azure",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.selectSubscription",
+        "title": "Select Subscription",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.refresh",
+        "title": "Refresh",
+        "category": "AVD",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "avd.drainSessionHost",
+        "title": "Set Drain Mode",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.undrainSessionHost",
+        "title": "Remove Drain Mode",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.restartSessionHost",
+        "title": "Restart Session Host",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.deleteSessionHost",
+        "title": "Delete Session Host",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.viewSessionHostDetails",
+        "title": "View Details",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.logoffUserSession",
+        "title": "Log Off User Session",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.sendMessage",
+        "title": "Send Message to User",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.disconnectUserSession",
+        "title": "Disconnect User Session",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.viewUserSessionDetails",
+        "title": "View Session Details",
+        "category": "AVD"
+      },
+      {
+        "command": "avd.scaffoldPackerTemplate",
+        "title": "Scaffold Packer Template",
+        "category": "AVD Image"
+      },
+      {
+        "command": "avd.scaffoldAIBTemplate",
+        "title": "Scaffold Azure Image Builder Template",
+        "category": "AVD Image"
+      },
+      {
+        "command": "avd.generateScalingPlan",
+        "title": "Generate Scaling Plan Bicep",
+        "category": "AVD Scaling"
+      },
+      {
+        "command": "avd.viewSessionLogs",
+        "title": "View Session Logs",
+        "category": "AVD Diagnostics"
+      },
+      {
+        "command": "avd.analyzeDisconnects",
+        "title": "Analyze Disconnect Reasons",
+        "category": "AVD Diagnostics"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "avd.refresh",
+          "when": "view == avdExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "avd.signIn",
+          "when": "view == avdExplorer && !avd.signedIn"
+        },
+        {
+          "command": "avd.signOut",
+          "when": "view == avdExplorer && avd.signedIn"
+        },
+        {
+          "command": "avd.selectSubscription",
+          "when": "view == avdExplorer && avd.signedIn"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "avd.drainSessionHost",
+          "when": "viewItem == sessionHost-available",
+          "group": "avd-actions@1"
+        },
+        {
+          "command": "avd.undrainSessionHost",
+          "when": "viewItem == sessionHost-draining",
+          "group": "avd-actions@1"
+        },
+        {
+          "command": "avd.restartSessionHost",
+          "when": "viewItem =~ /^sessionHost/",
+          "group": "avd-actions@2"
+        },
+        {
+          "command": "avd.deleteSessionHost",
+          "when": "viewItem =~ /^sessionHost/",
+          "group": "avd-danger@1"
+        },
+        {
+          "command": "avd.viewSessionHostDetails",
+          "when": "viewItem =~ /^sessionHost/",
+          "group": "inline"
+        },
+        {
+          "command": "avd.logoffUserSession",
+          "when": "viewItem == userSession",
+          "group": "avd-session@1"
+        },
+        {
+          "command": "avd.disconnectUserSession",
+          "when": "viewItem == userSession",
+          "group": "avd-session@2"
+        },
+        {
+          "command": "avd.sendMessage",
+          "when": "viewItem == userSession",
+          "group": "avd-session@3"
+        },
+        {
+          "command": "avd.viewUserSessionDetails",
+          "when": "viewItem == userSession",
+          "group": "inline"
+        },
+        {
+          "command": "avd.scaffoldPackerTemplate",
+          "when": "viewItem == hostPool",
+          "group": "avd-image@1"
+        },
+        {
+          "command": "avd.scaffoldAIBTemplate",
+          "when": "viewItem == hostPool",
+          "group": "avd-image@2"
+        },
+        {
+          "command": "avd.generateScalingPlan",
+          "when": "viewItem == hostPool",
+          "group": "avd-scaling@1"
+        },
+        {
+          "command": "avd.viewSessionLogs",
+          "when": "viewItem == hostPool",
+          "group": "avd-diagnostics@1"
+        },
+        {
+          "command": "avd.analyzeDisconnects",
+          "when": "viewItem == hostPool",
+          "group": "avd-diagnostics@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AVD Session Host Manager",
+      "properties": {
+        "avd.autoRefreshIntervalSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 0,
+          "maximum": 600,
+          "description": "Auto-refresh interval for the AVD tree view in seconds. Set to 0 to disable auto-refresh."
+        },
+        "avd.logAnalyticsWorkspaceId": {
+          "type": "string",
+          "default": "",
+          "description": "Log Analytics Workspace ID (GUID) for AVD diagnostics. If set, skips the manual input prompt."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "mocha --require src/test/unit/setup.js --require ts-node/register \"src/test/unit/**/*.test.ts\" --timeout 10000",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@types/sinon": "^17.0.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.56.0",
+    "mocha": "^10.2.0",
+    "sinon": "^17.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.0.0",
+    "@azure/arm-desktopvirtualization": "^1.1.0",
+    "@azure/arm-subscriptions": "^5.1.0",
+    "@azure/arm-compute": "^21.0.0",
+    "@azure/monitor-query": "^1.2.0"
+  }
+}

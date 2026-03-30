@@ -1,0 +1,273 @@
+import * as vscode from 'vscode';
+import { HostPoolTreeItem } from '../views/avdTreeDataProvider';
+
+export class ScalingCommands {
+    register(context: vscode.ExtensionContext): void {
+        context.subscriptions.push(
+            vscode.commands.registerCommand('avd.generateScalingPlan', (item?: HostPoolTreeItem) =>
+                this.generateScalingPlan(item)
+            )
+        );
+    }
+
+    private async generateScalingPlan(item?: HostPoolTreeItem): Promise<void> {
+        const options = await this.promptScheduleOptions();
+        if (!options) {
+            return;
+        }
+
+        const bicep = this.generateBicep(options, item);
+        const doc = await vscode.workspace.openTextDocument({
+            content: bicep,
+            language: 'bicep',
+        });
+        await vscode.window.showTextDocument(doc);
+        vscode.window.showInformationMessage(
+            'Scaling plan Bicep generated. Save as "avd-scaling-plan.bicep" to your project.'
+        );
+    }
+
+    private async promptScheduleOptions(): Promise<ScalingOptions | undefined> {
+        const planName = await vscode.window.showInputBox({
+            prompt: 'Scaling plan name',
+            placeHolder: 'e.g., scaling-plan-prod',
+            value: 'avd-scaling-plan',
+        });
+        if (!planName) {
+            return undefined;
+        }
+
+        const timezone = await vscode.window.showQuickPick(
+            [
+                'Eastern Standard Time',
+                'Central Standard Time',
+                'Mountain Standard Time',
+                'Pacific Standard Time',
+                'UTC',
+                'GMT Standard Time',
+                'W. Europe Standard Time',
+                'AUS Eastern Standard Time',
+            ],
+            { placeHolder: 'Select timezone for the schedule' }
+        );
+        if (!timezone) {
+            return undefined;
+        }
+
+        const rampUpTime = await vscode.window.showInputBox({
+            prompt: 'Ramp-up start time (HH:MM)',
+            value: '07:00',
+            validateInput: (v) => /^\d{2}:\d{2}$/.test(v) ? null : 'Use HH:MM format',
+        });
+        if (!rampUpTime) {
+            return undefined;
+        }
+
+        const peakTime = await vscode.window.showInputBox({
+            prompt: 'Peak hours start time (HH:MM)',
+            value: '09:00',
+            validateInput: (v) => /^\d{2}:\d{2}$/.test(v) ? null : 'Use HH:MM format',
+        });
+        if (!peakTime) {
+            return undefined;
+        }
+
+        const rampDownTime = await vscode.window.showInputBox({
+            prompt: 'Ramp-down start time (HH:MM)',
+            value: '17:00',
+            validateInput: (v) => /^\d{2}:\d{2}$/.test(v) ? null : 'Use HH:MM format',
+        });
+        if (!rampDownTime) {
+            return undefined;
+        }
+
+        const offPeakTime = await vscode.window.showInputBox({
+            prompt: 'Off-peak start time (HH:MM)',
+            value: '20:00',
+            validateInput: (v) => /^\d{2}:\d{2}$/.test(v) ? null : 'Use HH:MM format',
+        });
+        if (!offPeakTime) {
+            return undefined;
+        }
+
+        const peakMinPercent = await vscode.window.showInputBox({
+            prompt: 'Minimum percentage of session hosts during peak (%)',
+            value: '100',
+            validateInput: (v) => {
+                const n = parseInt(v, 10);
+                return (n >= 0 && n <= 100) ? null : 'Enter 0-100';
+            },
+        });
+        if (!peakMinPercent) {
+            return undefined;
+        }
+
+        const offPeakMinPercent = await vscode.window.showInputBox({
+            prompt: 'Minimum percentage of session hosts during off-peak (%)',
+            value: '10',
+            validateInput: (v) => {
+                const n = parseInt(v, 10);
+                return (n >= 0 && n <= 100) ? null : 'Enter 0-100';
+            },
+        });
+        if (!offPeakMinPercent) {
+            return undefined;
+        }
+
+        const includeWeekend = await vscode.window.showQuickPick(
+            [
+                { label: 'Yes — include a weekend (Sat/Sun) off-peak schedule', value: true },
+                { label: 'No — weekdays only', value: false },
+            ],
+            { placeHolder: 'Include a weekend schedule?' }
+        );
+        if (!includeWeekend) {
+            return undefined;
+        }
+
+        return {
+            planName,
+            timezone,
+            rampUpTime,
+            peakTime,
+            rampDownTime,
+            offPeakTime,
+            peakMinPercent: parseInt(peakMinPercent, 10),
+            offPeakMinPercent: parseInt(offPeakMinPercent, 10),
+            includeWeekend: includeWeekend.value,
+        };
+    }
+
+    private generateBicep(options: ScalingOptions, item?: HostPoolTreeItem): string {
+        const hostPoolRef = item
+            ? `\n// Host pool: ${item.hostPoolName} (${item.resourceGroup})`
+            : '';
+
+        return `// AVD Scaling Plan - Bicep Template
+// Generated by AVD Session Host Manager${hostPoolRef}
+
+@description('Name of the scaling plan')
+param scalingPlanName string = '${this.escapeBicep(options.planName)}'
+
+@description('Location for the scaling plan')
+param location string = resourceGroup().location
+
+@description('Host pool ARM resource ID to associate with the scaling plan')
+param hostPoolId string
+
+@description('Timezone for the scaling schedule')
+param timeZone string = '${options.timezone}'
+
+resource scalingPlan 'Microsoft.DesktopVirtualization/scalingPlans@2023-09-05' = {
+  name: scalingPlanName
+  location: location
+  properties: {
+    friendlyName: '\${scalingPlanName} - Auto-generated'
+    timeZone: timeZone
+    hostPoolType: 'Pooled'
+    exclusionTag: 'excludeFromScaling'
+    schedules: [
+      {
+        name: 'weekday_schedule'
+        daysOfWeek: [
+          'Monday'
+          'Tuesday'
+          'Wednesday'
+          'Thursday'
+          'Friday'
+        ]
+        rampUpStartTime: {
+          hour: ${parseInt(options.rampUpTime.split(':')[0], 10)}
+          minute: ${parseInt(options.rampUpTime.split(':')[1], 10)}
+        }
+        rampUpLoadBalancingAlgorithm: 'BreadthFirst'
+        rampUpMinimumHostsPct: ${options.peakMinPercent}
+        rampUpCapacityThresholdPct: 60
+        peakStartTime: {
+          hour: ${parseInt(options.peakTime.split(':')[0], 10)}
+          minute: ${parseInt(options.peakTime.split(':')[1], 10)}
+        }
+        peakLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownStartTime: {
+          hour: ${parseInt(options.rampDownTime.split(':')[0], 10)}
+          minute: ${parseInt(options.rampDownTime.split(':')[1], 10)}
+        }
+        rampDownLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownMinimumHostsPct: 10
+        rampDownCapacityThresholdPct: 90
+        rampDownForceLogoffUsers: false
+        rampDownWaitTimeMinutes: 30
+        rampDownNotificationMessage: 'Your session will be logged off in 30 minutes. Please save your work.'
+        rampDownStopHostsWhen: 'ZeroSessions'
+        offPeakStartTime: {
+          hour: ${parseInt(options.offPeakTime.split(':')[0], 10)}
+          minute: ${parseInt(options.offPeakTime.split(':')[1], 10)}
+        }
+        offPeakLoadBalancingAlgorithm: 'DepthFirst'
+      }
+${options.includeWeekend ? `      {
+        name: 'weekend_schedule'
+        daysOfWeek: [
+          'Saturday'
+          'Sunday'
+        ]
+        rampUpStartTime: {
+          hour: 8
+          minute: 0
+        }
+        rampUpLoadBalancingAlgorithm: 'BreadthFirst'
+        rampUpMinimumHostsPct: ${options.offPeakMinPercent}
+        rampUpCapacityThresholdPct: 80
+        peakStartTime: {
+          hour: 10
+          minute: 0
+        }
+        peakLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownStartTime: {
+          hour: 16
+          minute: 0
+        }
+        rampDownLoadBalancingAlgorithm: 'DepthFirst'
+        rampDownMinimumHostsPct: ${options.offPeakMinPercent}
+        rampDownCapacityThresholdPct: 90
+        rampDownForceLogoffUsers: false
+        rampDownWaitTimeMinutes: 30
+        rampDownNotificationMessage: 'Your session will be logged off in 30 minutes. Please save your work.'
+        rampDownStopHostsWhen: 'ZeroSessions'
+        offPeakStartTime: {
+          hour: 18
+          minute: 0
+        }
+        offPeakLoadBalancingAlgorithm: 'DepthFirst'
+      }` : '// Weekend schedule not included — add manually if needed'}
+    ]
+    hostPoolReferences: [
+      {
+        hostPoolArmPath: hostPoolId
+        scalingPlanEnabled: true
+      }
+    ]
+  }
+}
+
+output scalingPlanId string = scalingPlan.id
+output scalingPlanName string = scalingPlan.name
+`;
+    }
+
+    private escapeBicep(value: string): string {
+        return value.replace(/'/g, "\\'");
+    }
+}
+
+interface ScalingOptions {
+    planName: string;
+    timezone: string;
+    rampUpTime: string;
+    peakTime: string;
+    rampDownTime: string;
+    offPeakTime: string;
+    peakMinPercent: number;
+    offPeakMinPercent: number;
+    includeWeekend: boolean;
+}
