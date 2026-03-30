@@ -2,7 +2,7 @@
   "name": "azure-avd-manager",
   "displayName": "AVD Manager - Azure Virtual Desktop Admin Tool",
   "description": "Manage Azure Virtual Desktop host pools, session hosts, user sessions, image templates, and scaling plans directly from VS Code.",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "KimVaddi",
   "license": "MIT",
   "engines": {
